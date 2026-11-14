@@ -4,8 +4,10 @@ from redis import Redis
 from src.config.settings import REDIS_URL
 from src.models import Dataset, Job
 from src.services.business import metadata
+from src.services.withdrawals import is_dataset_withdrawn
 def create(db, data, user):
     if not db.get(Dataset,data.dataset_id): raise HTTPException(404,'数据批次不存在')
+    if is_dataset_withdrawn(db,data.dataset_id): raise HTTPException(409,'该领餐批次已撤回，不能再基于它发起试算；其他批次可正常使用')
     allowed={p['key']:p for p in metadata().get('parameters',[])}
     if set(data.params)-set(allowed): raise HTTPException(422,'包含未知分析参数')
     params={k:p['default'] for k,p in allowed.items()}

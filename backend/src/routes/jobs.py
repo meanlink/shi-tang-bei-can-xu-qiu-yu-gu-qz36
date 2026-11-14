@@ -24,6 +24,7 @@ def detail(id:int,db=Depends(get_db),u=Depends(current_user)):
 def approve(id:int,db=Depends(get_db),u=Depends(admin_only)):
     j=db.get(Job,id)
     if not j: raise HTTPException(404,'分析任务不存在')
+    if j.withdrawn: raise HTTPException(409,'所属批次已撤回，撤回优先于批准，该结果不能再获批准')
     if j.status!='completed':raise HTTPException(409,'仅已完成结果可以批准')
     j.approved=True; record(db,u.email,'job.approve',{'id':id}); db.commit()
     return job_dict(j)
